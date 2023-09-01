@@ -1,0 +1,61 @@
+-- Из таблиц in_msg и in_msg_data
+CREATE OR REPLACE FUNCTION f_in_msg_to_k() RETURNS TRIGGER AS
+$$
+
+BEGIN
+    DECLARE
+        rec RECORD;
+    BEGIN
+
+        -- Для Кошек
+        -- msg_type = 27        - Тип сообщения Кошки
+        -- msg_subtype = 13 - Подтверждение о получении
+        -- msg_subtype = 71 - Подтверждение о прочтении
+        IF ((NEW.msg_type = '27') AND (NEW.msg_subtype != '13'))
+
+        -- Для Собак
+        -- msg_type = 26        - Тип сообщения Собаки
+        -- msg_subtype = 51 - Сообщение домашние кошки
+        -- msg_subtype = 55 - Сообщения уличные кошки
+        OR ((NEW.msg_type = '26') AND ((NEW.msg_subtype = '51') OR (NEW.msg_subtype = '55')
+
+	-- Для Птиц
+        -- msg_subtype = 22 - Птицы
+	    OR (NEW.msg_subtype = '22')) AND (octet_length(rec.msg_data) > 12)
+        THEN
+            -- Выбираем из таблицы in_msg_data данные столбца msg_data такие,
+            -- что поле msg_id таблицы in_msg_data соответсвует полю msg_id таблицы in_msg,
+            -- и записываем их в переменную "rec"
+            SELECT INTO rec msg_data FROM in_msg_data WHERE msg_id = NEW.msg_id;
+
+            -- Выводим значения полей   msg_id, msg_urgent, msg_type, msg_subtype, msg_size, snd_addr_ip    таблицы in_msg,
+            -- и значение поля          msg_data                                                            таблицы in_msg_data
+            RAISE NOTICE '%', NEW.msg_id;
+            RAISE NOTICE '%', NEW.msg_urgent;
+            RAISE NOTICE '%', NEW.msg_mac;
+            RAISE NOTICE '%', NEW.msg_type;
+            RAISE NOTICE '%', NEW.msg_subtype;
+            RAISE NOTICE '%', NEW.msg_size;
+            RAISE NOTICE '%', NEW.snd_addr_ip;
+            RAISE NOTICE '%', rec.msg_data;
+            -------------
+            
+            -------------
+
+            BEGIN
+                -- Вставить в поля  msg_id, msg_urgent, msg_type, msg_subtype, msg_size, snd_addr_ip, msg_data  таблицы in_msg_basu
+                -- значения полей   msg_id, msg_urgent, msg_type, msg_subtype, msg_size, snd_addr_ip            таблицы in_msg,
+                -- и значение поля  msg_data                                                                    таблицы in_msg_data
+                INSERT INTO in_msg_sgk (msg_id, msg_urgent, msg_mac, msg_type, msg_subtype, msg_size, snd_addr_ip, msg_data) 
+                VALUES (NEW.msg_id, NEW.msg_urgent, NEW.msg_mac, NEW.msg_type, NEW.msg_subtype, NEW.msg_size, NEW.snd_addr_ip, rec.msg_data);
+                -- Перехватываем и обрабатываем остальные исключения
+                EXCEPTION
+                WHEN OTHERS
+                THEN
+                    RETURN NEW;
+            END;
+        END IF;
+    END;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
