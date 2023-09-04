@@ -1,0 +1,36 @@
+CREATE OR REPLACE FUNCTION f_in_msg_to_k() RETURNS TRIGGER AS
+$$
+DECLARE
+    rec RECORD;
+BEGIN
+    -- Для Кошек
+    IF (NEW.msg_type = '27' AND NEW.msg_subtype != '13') OR
+       -- Для Собак
+       (NEW.msg_type = '26' AND (NEW.msg_subtype = '51' OR NEW.msg_subtype = '55')) OR
+       -- Для Птиц
+       (NEW.msg_subtype = '22' AND (octet_length(rec.msg_data) > 12))
+    THEN
+        -- Выбираем данные из таблицы in_msg_data
+        SELECT INTO rec msg_data FROM in_msg_data WHERE msg_id = NEW.msg_id;
+
+        -- Выводим значения полей
+        RAISE NOTICE '%', NEW.msg_id;
+        RAISE NOTICE '%', NEW.msg_urgent;
+        RAISE NOTICE '%', NEW.msg_mac;
+        RAISE NOTICE '%', NEW.msg_type;
+        RAISE NOTICE '%', NEW.msg_subtype;
+        RAISE NOTICE '%', NEW.msg_size;
+        RAISE NOTICE '%', NEW.snd_addr_ip;
+        RAISE NOTICE '%', rec.msg_data;
+
+        -- Вставляем данные в таблицу in_msg_sgk
+        INSERT INTO in_msg_sgk (msg_id, msg_urgent, msg_mac, msg_type, msg_subtype, msg_size, snd_addr_ip, msg_data) 
+        VALUES (NEW.msg_id, NEW.msg_urgent, NEW.msg_mac, NEW.msg_type, NEW.msg_subtype, NEW.msg_size, NEW.snd_addr_ip, rec.msg_data);
+    END IF;
+
+    RETURN NEW;
+EXCEPTION
+WHEN OTHERS THEN
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
