@@ -1,0 +1,34 @@
+cmake_minimum_required(VERSION 3.10)
+project(YourProject)
+
+# Установка значений переменных
+set(PACKAGE_NAME "MyPackage")
+set(PACKAGE_VERSION "1.0.0")
+set(MAINTAINER_NAME "John Doe")
+set(MAINTAINER_EMAIL "john.doe@example.com")
+
+# Получение текущей даты и времени в формате RFC2822
+string(TIMESTAMP CURRENT_DATE "%a, %d %b %Y %H:%M:%S %z" UTC)
+
+# Создание debian-директории
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/debian)
+
+# Генерация changelog
+file(READ debian/changelog.in changelog_template)
+configure_file(
+    debian/changelog.in 
+    ${CMAKE_CURRENT_BINARY_DIR}/debian/changelog 
+    @ONLY
+)
+
+# Генерация copyright
+file(READ debian/copyright.in copyright_template)
+configure_file(
+    debian/copyright.in 
+    ${CMAKE_CURRENT_BINARY_DIR}/debian/copyright 
+    @ONLY
+)
+
+# ...
+
+# Дополнительные настройки и цели для вашего проекта
