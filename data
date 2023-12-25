@@ -1,0 +1,37 @@
+Пример файла debian/changelog.in:
+
+
+
+@PACKAGE_NAME@ (@PACKAGE_VERSION@) stable; urgency=medium
+
+  * Changes for the new version.
+
+ -- @MAINTAINER_NAME@ <@MAINTAINER_EMAIL@>  @DATE@
+
+Пример в CMakeLists.txt:
+
+cmake
+
+# Установка значений переменных
+set(PACKAGE_NAME "MyPackage")
+set(PACKAGE_VERSION "1.0.0")
+set(MAINTAINER_NAME "John Doe")
+set(MAINTAINER_EMAIL "john.doe@example.com")
+
+# Получение текущей даты и времени в формате RFC2822
+string(TIMESTAMP CURRENT_DATE "%a, %d %b %Y %H:%M:%S %z" UTC)
+
+# Вставка текущей даты в changelog.in
+file(READ debian/changelog.in changelog_template)
+configure_file(
+    debian/changelog.in 
+    ${CMAKE_CURRENT_BINARY_DIR}/debian/changelog 
+    @ONLY
+)
+
+# Вывод переменной CURRENT_DATE для проверки
+message("Current Date: ${CURRENT_DATE}")
+
+В результате выполнения configure_file, переменные @PACKAGE_NAME@, @PACKAGE_VERSION@, @MAINTAINER_NAME@, @MAINTAINER_EMAIL@ и @DATE@ в файле debian/changelog.in будут заменены соответствующими значениями.
+
+Теперь файл debian/changelog будет содержать текущую дату вместо @DATE@. Обратите внимание, что эти строки кода должны быть расположены в вашем CMakeLists.txt после установки значений переменных и до использования configure_file.
